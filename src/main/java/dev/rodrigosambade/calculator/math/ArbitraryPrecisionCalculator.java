@@ -30,7 +30,15 @@ public final class ArbitraryPrecisionCalculator {
             case "div", "divide", "/" -> a.divide(requireB(b), mathContext);
             case "pow", "^" -> BigComplexMath.pow(a, requireB(b), mathContext);
             case "root" -> BigComplexMath.root(a, requireB(b), mathContext);
-            case "sqrt" -> BigComplexMath.sqrt(a, mathContext);
+            case "sqrt" -> {
+                // big-math 2.3.2 divides by zero for purely negative real inputs
+                // such as -1 + 0i. Use the principal square root directly.
+                if (a.im.signum() == 0 && a.re.signum() < 0) {
+                    yield BigComplex.valueOf(
+                            BigDecimal.ZERO, a.re.negate().sqrt(mathContext));
+                }
+                yield BigComplexMath.sqrt(a, mathContext);
+            }
             case "exp" -> BigComplexMath.exp(a, mathContext);
             case "log", "ln" -> BigComplexMath.log(a, mathContext);
             case "sin" -> BigComplexMath.sin(a, mathContext);
